@@ -31,10 +31,7 @@
 > Note: Don't use  your merchant panel user id & password in the **Store ID**, **Store Password** field.
 
 4. Must input **Checkout Title** otherwise it will not show any title in checkout page.
-5. Find the IPN URL. It will look like ```[your site]/index.php?sslcommerzeddipn```. Copy this URL, it will be needed in the next step.
-6. Login to your shurjoPay merchant panel. Navigate to ```My Stores > IPN Settings``` from menu. Find ```IPN at HTTP Listner``` section at the bottom of the page.
-7. Paste the URL obtained from step 5. Check the box labeled ```Enable HTTP Listner```. Click ```Save```.
-8. Setup is complete. Check if everything is working properly.
+5. Setup is complete. Check if everything is working properly.
 
 #### Note: For live mode uncheck ```Test Mode``` and use your Live Store ID & Password.
 
