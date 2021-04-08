@@ -41,7 +41,7 @@
 > In their words "From eBooks, to WordPress plugins, to PDF files and more, we make selling digital products a breeze. Easy Digital Downloads is simple to use and free to download." [More](https://easydigitaldownloads.com/) 
 
 ### What is shurjoPay?
-> shurjoPay is the first payment gateway in Bangladesh opening doors for merchants to receive payments on the internet via their online stores.
+> We are a Payment System Operator (PSO) licensee, being one of the first companies granted the license from Bangladesh Bank. shurjoPay (Product of shurjoMukhi Limited) is our online payment gateway that collects payment from consumers or businesses invoiced by the e-merchants. shurjoPay is a universal e-Payment Gateway using which e-merchants can acquire card and mobile wallet transactions in Bangladesh to receive payments on the internet via their online stores. shurjoPay can accept payments by any VISA, MasterCard, AmEx, Diners Club, Nexus or QCash card along with bKash, MCash and Rocket. Prominent organizations including Dhaka WASA, Bangladesh Army, Bangladesh Red Crescent, and Dhaka Stock Exchange are using our gateway.
 
 ### What is a Payment Gateway?
 > Payment Gateway is a service that allows merchant to accept secure credit card transactions online. It essentially connects a merchant website to a transaction processor like bank to take payment from a customer for an order.
