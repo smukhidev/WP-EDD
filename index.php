@@ -21,6 +21,8 @@ function shurjopay_edd_register_gateway($gateways) {
 }
 add_filter('edd_payment_gateways', 'shurjopay_edd_register_gateway', 1, 1 );
 
+// To remove the default cc form
+remove_action( 'edd_cc_form', 'edd_get_cc_form' );
 #----------------------END---------------------------------------
 
 
@@ -84,7 +86,6 @@ add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'plugin_page_sett
 
 #------------------------------------End-----------------------------------------
 
-
 #---------------------Processing data and requesting shurjoPay Payment Gateway page-----------------------
 function shurjoPay_process_payment($purchase_data) {
 	global $edd_options;
@@ -100,6 +101,13 @@ function shurjoPay_process_payment($purchase_data) {
 	{
 		$request_api = "https://shurjopay.com/sp-data.php";
 	}
+	
+	
+		$success_url = add_query_arg( array(
+			'payment-confirmation' => 'shurjoPay',
+			'payment-id' => $payment
+		), get_permalink( edd_get_option( 'success_page', false ) ) );
+
 
 	$payment_data = array(
 		'price'         => $purchase_data['price'],
@@ -111,7 +119,8 @@ function shurjoPay_process_payment($purchase_data) {
 		'user_info'     => $purchase_data['user_info'],
 		'cart_details'  => $purchase_data['cart_details'],
 		'gateway'       => 'shurjoPay',
-		'status'        => 'pending'
+		'status'        => 'pending',
+		'success_url' 	=> $return_url
 	);
 
 	$payment = edd_insert_payment( $payment_data );
@@ -130,20 +139,22 @@ function shurjoPay_process_payment($purchase_data) {
 		$unique_id = edd_get_option('unique_id').$payment."_".rand(1,100);
 		
 		$return_url = add_query_arg( array(
-			'payment-mode' => 'sslcommerz',
+			'payment-mode' => 'shurjoPay',
 		), get_permalink( edd_get_option( 'purchase_page', false ) ) );
-
+    
+        
+        $amount = 85 * $purchase_data['price'];
 		
-		$amount=$purchase_data['price'];
 		$xml_data = 'spdata=<?xml version="1.0" encoding="utf-8"?>
 		<shurjoPay><merchantName>' . $store_id . '</merchantName>
 		<merchantPass>' . $store_password . '</merchantPass>
 		<userIP>'. $_SERVER['REMOTE_ADDR'].'</userIP>
 		<uniqID>' . $unique_id . '</uniqID>
+		<currency>BDT</currency>
 		<totalAmount>' . $amount . '</totalAmount>
 		<paymentOption>shurjopay</paymentOption>
 		<returnURL>' . $return_url . '</returnURL></shurjoPay>';
-
+//<currency>' . edd_get_currency() . '</currency>
 	    $ch = curl_init();
         
         curl_setopt($ch, CURLOPT_URL, $request_api);
@@ -174,6 +185,61 @@ function user_contact_form_to_purchase()
 }
 
 add_action('edd_purchase_form_user_info', 'user_contact_form_to_purchase');
+
+
+add_action('init', 'sp_redirect');
+
+function sp_redirect() {
+	$server_url="";
+	if(edd_is_test_mode()) 
+	{
+		$server_url = "https://shurjotest.com";
+	} 
+	else 
+	{
+		$server_url = "https://shurjopay.com";
+	}
+
+	if (isset($_REQUEST['spdata']) && !empty($_REQUEST['spdata'])) {
+		$response_encrypted = $_REQUEST['spdata'];
+		$response_decrypted = file_get_contents($server_url . "/merchant/decrypt.php?data=" . $response_encrypted);
+		$response_data = simplexml_load_string($response_decrypted) or die("Error: Cannot create object");
+		
+		if($response_data->spCode == "000")
+		{
+			$success_url = add_query_arg( array(
+			'payment-confirmation' => 'shurjoPay',
+			'payment-id' => $payment
+		), get_permalink( edd_get_option( 'success_page', false ) ) );
+			header("Location: ".html_entity_decode($success_url));
+			 echo "<script type=\"text/javascript\">
+				<!--
+				window.location = \"".html_entity_decode($success_url)."\"
+				//-->
+				</script>";
+		}
+		else if($response_data->spCode == "001" and $response_data->status='')
+		{
+			$cancel_url = add_query_arg( array(
+			'payment-confirmation' => 'shurjoPay',
+			'payment-id' => $payment
+		), get_permalink( edd_get_option( 'purchase_history_page', false ) ) );
+		}
+		else{
+			$cancel_url = add_query_arg( array(
+			'payment-confirmation' => 'shurjoPay',
+			'payment-id' => $payment
+		), get_permalink( edd_get_option( 'purchase_history_page', false ) ) );
+			header("Location: ".html_entity_decode($spay_redirect['cancel_url']));
+			 echo "<script type=\"text/javascript\">
+				<!--
+				window.location = \"".html_entity_decode($spay_redirect['cancel_url'])."\"
+				//-->
+				</script>";
+		}
+		die();
+	}
+}  
 
 
 ?>
