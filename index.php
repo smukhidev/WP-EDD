@@ -3,7 +3,7 @@
 	Plugin Name: shurjoPay for Easy Digital Download WP V5.2.*
 	Plugin URI: https://github.com/smukhidev
 	Description: This plugin allows you to accept payments on your EDD store from customers using MFS, iBanking, Local and Internation Debit/Credit Card etc. via shurjoPay payment gateway.
-	Version: 1
+	Version: 1.0.0
 	Author: Nazmus Shahadat
 	Author Email: shurjopay@shurjomukhi.com.bd
 	Copyright: © 2015-2021 shurjoPay.
@@ -16,10 +16,16 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 #--------------Show Label In Settings Page----------------------
 
 function shurjopay_edd_register_gateway($gateways) {
-	$gateways['shurjoPay'] = array('admin_label' => 'shurjoPay Payment Gateway', 'checkout_label' => __(edd_get_option( 'shurjopay_title' ), 'shurjopay'));
+	$gateways['shurjoPay'] = array('admin_label' => 'shurjoPay', 'checkout_label' => __(edd_get_option( 'spay_title' ), 'shurjoPay'));
 	return $gateways;
 }
 add_filter('edd_payment_gateways', 'shurjopay_edd_register_gateway', 1, 1 );
+
+function pw_edd_payment_icon($icons) {
+    $icons['https://shurjopay.com/admin/images/sand-box-logo.jpg'] = 'shurjoPay';
+    return $icons;
+}
+add_filter('edd_accepted_payment_icons', 'pw_edd_payment_icon');
 
 // To remove the default cc form
 remove_action( 'edd_cc_form', 'edd_get_cc_form' );
@@ -89,7 +95,7 @@ add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'plugin_page_sett
 #---------------------Processing data and requesting shurjoPay Payment Gateway page-----------------------
 function shurjoPay_process_payment($purchase_data) {
 	global $edd_options;
- 
+	
 	/**********************************
 	* set transaction mode
 	**********************************/
@@ -188,7 +194,6 @@ add_action('edd_purchase_form_user_info', 'user_contact_form_to_purchase');
 
 
 add_action('init', 'sp_redirect');
-
 function sp_redirect() {
 	$server_url="";
 	if(edd_is_test_mode()) 
@@ -204,9 +209,21 @@ function sp_redirect() {
 		$response_encrypted = $_REQUEST['spdata'];
 		$response_decrypted = file_get_contents($server_url . "/merchant/decrypt.php?data=" . $response_encrypted);
 		$response_data = simplexml_load_string($response_decrypted) or die("Error: Cannot create object");
+		$bank_order=$response_data->txID;
+		$bank_order=substr($response_data->txID,3);
+		$bank_order=explode('_',$bank_order);
+		$payment_id=$bank_order[0];	
+		
+		
+		//print_r($response_data);
+		
 		
 		if($response_data->spCode == "000")
 		{
+			$transaction = new EDD_Payment($payment_id);
+			$transaction->status = 'complete';
+			$transaction->save();
+			//$order->update_status("processing", "Payment Completed on " . date('d M Y h:i:s A') . " Portwallet Invoice # " . $response_data->txID);
 			$success_url = add_query_arg( array(
 			'payment-confirmation' => 'shurjoPay',
 			'payment-id' => $payment
@@ -218,28 +235,36 @@ function sp_redirect() {
 				//-->
 				</script>";
 		}
-		else if($response_data->spCode == "001" and $response_data->status='')
+		else if($response_data->spCode == "001" and $response_data->bankTxStatus='CANCEL')
 		{
+			
 			$cancel_url = add_query_arg( array(
 			'payment-confirmation' => 'shurjoPay',
 			'payment-id' => $payment
-		), get_permalink( edd_get_option( 'purchase_history_page', false ) ) );
+			), get_permalink( edd_get_option( 'purchase_history_page', false ) ) );
+			header("Location: ".html_entity_decode($cancel_url));
+			 echo "<script type=\"text/javascript\">
+				<!--
+				window.location = \"".html_entity_decode($cancel_url)."\"
+				//-->
+				</script>";
 		}
 		else{
 			$cancel_url = add_query_arg( array(
 			'payment-confirmation' => 'shurjoPay',
 			'payment-id' => $payment
 		), get_permalink( edd_get_option( 'purchase_history_page', false ) ) );
-			header("Location: ".html_entity_decode($spay_redirect['cancel_url']));
+			header("Location: ".html_entity_decode($cancel_url));
 			 echo "<script type=\"text/javascript\">
 				<!--
-				window.location = \"".html_entity_decode($spay_redirect['cancel_url'])."\"
+				window.location = \"".html_entity_decode($cancel_url)."\"
 				//-->
 				</script>";
 		}
 		die();
 	}
-}  
+}
+
 
 
 ?>
