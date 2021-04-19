@@ -16,19 +16,11 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 #--------------Show Label In Settings Page----------------------
 
 function shurjopay_edd_register_gateway($gateways) {
-	$gateways['shurjoPay'] = array('admin_label' => 'shurjoPay', 'checkout_label' => __(edd_get_option( 'spay_title' ), 'shurjoPay'));
+	$gateways['shurjopay'] = array('admin_label' => 'shurjoPay', 'checkout_label' => __(edd_get_option( 'spay_title' ), 'spay_edd'));
 	return $gateways;
 }
 add_filter('edd_payment_gateways', 'shurjopay_edd_register_gateway', 1, 1 );
 
-function pw_edd_payment_icon($icons) {
-    $icons['https://shurjopay.com/admin/images/sand-box-logo.jpg'] = 'shurjoPay';
-    return $icons;
-}
-add_filter('edd_accepted_payment_icons', 'pw_edd_payment_icon');
-
-// To remove the default cc form
-remove_action( 'edd_cc_form', 'edd_get_cc_form' );
 #----------------------END---------------------------------------
 
 
@@ -91,6 +83,7 @@ add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'plugin_page_sett
 
 
 #------------------------------------End-----------------------------------------
+
 
 #---------------------Processing data and requesting shurjoPay Payment Gateway page-----------------------
 function shurjoPay_process_payment($purchase_data) {
@@ -174,7 +167,7 @@ function shurjoPay_process_payment($purchase_data) {
         print_r($response);
 	}
 }
-add_action('edd_gateway_shurjoPay', 'shurjoPay_process_payment');
+add_action('edd_gateway_shurjopay', 'shurjoPay_process_payment');
 
 #-------------------------------END--------------------------------
 
@@ -192,8 +185,17 @@ function user_contact_form_to_purchase()
 
 add_action('edd_purchase_form_user_info', 'user_contact_form_to_purchase');
 
+#-------------------------------END--------------------------------
 
-add_action('init', 'sp_redirect');
+#----------------- shurjoPay Validation API ----------------------
+
+function listen_for_spay_response() {
+	
+	//remove_action( 'edd_after_cc_fields', 'edd_default_cc_address_fields' ); 
+	remove_action( 'edd_cc_form', 'edd_get_cc_form' ); 
+}
+add_action( 'init', 'listen_for_spay_response' );
+
 function sp_redirect() {
 	$server_url="";
 	if(edd_is_test_mode()) 
@@ -264,6 +266,7 @@ function sp_redirect() {
 		die();
 	}
 }
+add_action('init', 'sp_redirect');
 
 
 
